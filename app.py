@@ -82,7 +82,7 @@ st.title("Reconocimiento Óptico de Caracteres (✿^‿^)")
 st.subheader("Extrae texto de imágenes y escúchalo en otro idioma.")
 
 # --- Sección 1: Carga de Imagen ---
-st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+# Se eliminó la caja rosada de esta sección
 st.markdown("<h2>Paso 1: Elige tu Imágen (b ᵔ▽ᵔ)b</h2>", unsafe_allow_html=True)
 
 cam_ = st.checkbox("Usar Cámara")
@@ -97,8 +97,6 @@ else:
 st.markdown("<p style='text-align: center; color: #c2185b;'>— O —</p>", unsafe_allow_html=True)
 
 bg_image = st.file_uploader("Cargar una Imagen:", type=["png", "jpg", "jpeg"])
-
-st.markdown('</div>', unsafe_allow_html=True)
 
 
 # --- Sección 2: Procesamiento de Imagen y OCR ---
@@ -133,14 +131,15 @@ if img_file_buffer is not None:
         text = "" # Resetear texto en caso de error
 
 # --- Sección 3: Mostrar Texto Extraído (Editable) ---
-# Esta sección ahora es independiente y siempre se muestra, 
-# reflejando el 'text' global que fue actualizado por la cámara o el archivo.
+# Esta sección ahora está dentro de una caja rosada
+st.markdown('<div class="pink-box">', unsafe_allow_html=True)
 st.subheader("Texto Extraído (Puedes editarlo) ✍️")
 text = st.text_area("Resultado del OCR:", text, height=200, label_visibility="collapsed")
+st.markdown('</div>', unsafe_allow_html=True)
 
 
 # --- Sección 4: Traducción y Text-to-Speech ---
-st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+# Se eliminó la caja rosada principal de esta sección
 st.markdown("<h2>Paso 2: Traducir y Escuchar 🎧</h2>", unsafe_allow_html=True)
 
 # Crear directorio temporal si no existe
@@ -213,15 +212,13 @@ if st.button("Convertir y Hablar! 🎶", use_container_width=True, type="primary
                 st.audio(audio_bytes, format="audio/mp3", start_time=0)
                 
                 if display_output_text:
+                    # La caja rosada ahora rodea solo el texto traducido
+                    st.markdown('<div class="pink-box">', unsafe_allow_html=True)
                     st.markdown("### Texto Traducido:")
                     st.write(f"> {output_text}")
+                    st.markdown('</div>', unsafe_allow_html=True)
             else:
                 st.error("No se pudo generar el archivo de audio.")
     else:
         st.warning("No hay texto para convertir. Por favor, carga una imagen o toma una foto primero. (・_・;)")
 
-st.markdown('</div>', unsafe_allow_html=True)
-
- 
-    
-    
