@@ -65,7 +65,7 @@ st.title("Reconocimiento Óptico de Caracteres (✿^‿^)")
 st.subheader("Extrae texto de imágenes y escúchalo en otro idioma.")
 
 # --- Sección 1: Carga de Imagen ---
-st.markdown("<h2>Paso 1: Elige tu Imágen (b ᵔ▽ᵔ)b</h2>", unsafe_allow_html=True)
+st.markdown("<h2>Paso 1: Elige tu Imágen</h2>", unsafe_allow_html=True)
 
 cam_ = st.checkbox("Usar Cámara")
 filtro = 'No'  # Valor por defecto
@@ -76,7 +76,7 @@ if cam_:
 else:
     img_file_buffer = None
 
-st.markdown("<p style='text-align: center; color: #c2185b;'>— O —</p>", unsafe_allow_html=True)
+st.markdown("<p style='text-align: center; color: #FFB6C1;'>— O —</p>", unsafe_allow_html=True)
 
 bg_image = st.file_uploader("Cargar una Imagen:", type=["png", "jpg", "jpeg"])
 
@@ -114,7 +114,7 @@ if img_file_buffer is not None:
 
 # --- Sección 3: Mostrar Texto Extraído (Editable) ---
 # Se eliminó la caja rosada
-st.subheader("Texto Extraído (Puedes editarlo) ✍️")
+st.subheader("Texto Extraído (Puedes editarlo) ✧˖°")
 text = st.text_area("Resultado del OCR:", text, height=200, label_visibility="collapsed")
 
 
