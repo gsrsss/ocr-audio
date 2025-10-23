@@ -178,16 +178,16 @@ tld = accent_map.get(english_accent, "com")
 
 display_output_text = st.checkbox("Mostrar texto traducido", value=True)
 
-if st.button("Convertir y Hablar! 🎶", use_container_width=True, type="primary"):
+if st.button("Convertir y Hablar!", use_container_width=True, type="primary"):
     if text and text.strip():
-        with st.spinner("Traduciendo y generando audio... (｡♥‿♥｡)"):
+        with st.spinner("Traduciendo y generando audio..."):
             result, output_text, audio_path = text_to_speech(input_language, output_language, text, tld)
             
             if audio_path and os.path.exists(audio_path):
                 audio_file = open(audio_path, "rb")
                 audio_bytes = audio_file.read()
                 
-                st.markdown("### ¡Tu audio está listo! 🎵")
+                st.markdown("### ¡Tu audio está listo!")
                 st.audio(audio_bytes, format="audio/mp3", start_time=0)
                 
                 if display_output_text:
