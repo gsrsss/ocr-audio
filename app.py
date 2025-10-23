@@ -2,7 +2,6 @@ import streamlit as st
 import os
 import time
 import glob
-import os
 import cv2
 import numpy as np
 import pytesseract
@@ -10,177 +9,218 @@ from PIL import Image
 from gtts import gTTS
 from googletrans import Translator
 
-
-text=" "
+# Variable global para almacenar el texto extraído
+text = ""
 
 def text_to_speech(input_language, output_language, text, tld):
-    translation = translator.translate(text, src=input_language, dest=output_language)
-    trans_text = translation.text
-    tts = gTTS(trans_text, lang=output_language, tld=tld, slow=False)
+    """
+    Traduce el texto y lo convierte a voz, guardándolo como un archivo MP3.
+    """
     try:
-        my_file_name = text[0:20]
-    except:
-        my_file_name = "audio"
-    tts.save(f"temp/{my_file_name}.mp3")
-    return my_file_name, trans_text
-
-
-
+        translator = Translator()
+        translation = translator.translate(text, src=input_language, dest=output_language)
+        trans_text = translation.text
+        tts = gTTS(trans_text, lang=output_language, tld=tld, slow=False)
+        
+        # Crear un nombre de archivo simple
+        try:
+            my_file_name = text[0:20].replace(" ", "_").replace("\n", "_")
+        except:
+            my_file_name = "audio"
+        
+        # Asegurarse de que el directorio temp exista
+        os.makedirs("temp", exist_ok=True)
+        
+        audio_path = f"temp/{my_file_name}.mp3"
+        tts.save(audio_path)
+        return my_file_name, trans_text, audio_path
+    except Exception as e:
+        st.error(f"Error en la conversión a voz: {e}")
+        return None, None, None
 
 def remove_files(n):
+    """
+    Elimina archivos MP3 antiguos del directorio temporal.
+    """
     mp3_files = glob.glob("temp/*mp3")
     if len(mp3_files) != 0:
         now = time.time()
         n_days = n * 86400
         for f in mp3_files:
-            if os.stat(f).st_mtime < now - n_days:
-                os.remove(f)
-                print("Deleted ", f)
+            try:
+                if os.stat(f).st_mtime < now - n_days:
+                    os.remove(f)
+                    print("Deleted ", f)
+            except Exception as e:
+                print(f"No se pudo eliminar {f}: {e}")
 
+# --- Inicio de la App de Streamlit ---
 
+# Limpiar archivos antiguos al iniciar
 remove_files(7)
-  
 
+# Estilo CSS para las cajas rosadas
+st.markdown("""
+<style>
+.pink-box {
+    background-color: #fce4ec; /* Rosa muy claro */
+    border: 2px solid #f06292; /* Borde rosa más oscuro */
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.pink-box h2 {
+    color: #c2185b; /* Rosa oscuro para el título */
+    border-bottom: 2px solid #f06292;
+    padding-bottom: 5px;
+}
+</style>
+""", unsafe_allow_html=True)
 
+st.title("Reconocimiento Óptico de Caracteres (✿^‿^)")
+st.subheader("Extrae texto de imágenes y escúchalo en otro idioma.")
 
-st.title("Reconocimiento Óptico de Caracteres")
-st.subheader("Elige la fuente de la imágen, esta puede venir de la cámara o cargando un archivo")
+# --- Sección 1: Carga de Imagen ---
+st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+st.markdown("<h2>Paso 1: Elige tu Imágen (b ᵔ▽ᵔ)b</h2>", unsafe_allow_html=True)
 
 cam_ = st.checkbox("Usar Cámara")
+filtro = 'No'  # Valor por defecto
 
-if cam_ :
-   img_file_buffer = st.camera_input("Toma una Foto")
-else :
-   img_file_buffer = None
-   
-with st.sidebar:
-      st.subheader("Procesamiento para Cámara")
-      filtro = st.radio("Filtro para imagen con cámara",('Sí', 'No'))
+if cam_:
+    img_file_buffer = st.camera_input("Toma una Foto")
+    filtro = st.radio("Aplicar filtro (invertir color)", ('Sí', 'No'), help="Útil para texto blanco sobre fondo oscuro.")
+else:
+    img_file_buffer = None
 
-bg_image = st.file_uploader("Cargar Imagen:", type=["png", "jpg"])
+st.markdown("<p style='text-align: center; color: #c2185b;'>— O —</p>", unsafe_allow_html=True)
+
+bg_image = st.file_uploader("Cargar una Imagen:", type=["png", "jpg", "jpeg"])
+
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# --- Sección 2: Procesamiento de Imagen y OCR ---
 if bg_image is not None:
-    uploaded_file=bg_image
-    st.image(uploaded_file, caption='Imagen cargada.', use_container_width=True)
-    
-    # Guardar la imagen en el sistema de archivos
-    with open(uploaded_file.name, 'wb') as f:
-        f.write(uploaded_file.read())
-    
-    st.success(f"Imagen guardada como {uploaded_file.name}")
-    img_cv = cv2.imread(f'{uploaded_file.name}')
-    img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
-    text= pytesseract.image_to_string(img_rgb)
-st.write(text)  
-    
-      
-if img_file_buffer is not None:
-    # To read image file buffer with OpenCV:
-    bytes_data = img_file_buffer.getvalue()
-    cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
-
-    
-    if filtro == 'Con Filtro':
-         cv2_img=cv2.bitwise_not(cv2_img)
-    else:
-        cv2_img= cv2_img
-          
+    try:
+        # Para manejar archivos en memoria
+        file_bytes = np.asarray(bytearray(bg_image.read()), dtype=np.uint8)
+        img_cv = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
         
-    img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
-    text=pytesseract.image_to_string(img_rgb) 
-    st.write(text) 
+        img_rgb = cv2.cvtColor(img_cv, cv2.COLOR_BGR2RGB)
+        text = pytesseract.image_to_string(img_rgb)
+        st.success("¡Imagen cargada y procesada! (◕‿◕)")
+    except Exception as e:
+        st.error(f"Error al procesar la imagen cargada: {e}")
+        text = "" # Resetear texto en caso de error
 
-with st.sidebar:
-      st.subheader("Parámetros de traducción")
-      
-      try:
-          os.mkdir("temp")
-      except:
-          pass
-      #st.title("Text to speech")
-      translator = Translator()
-      
-      #text = st.text_input("Enter text")
-      in_lang = st.selectbox(
-          "Seleccione el lenguaje de entrada",
-          ("Ingles", "Español", "Bengali", "koreano", "Mandarin", "Japones"),
-      )
-      if in_lang == "Ingles":
-          input_language = "en"
-      elif in_lang == "Español":
-          input_language = "es"
-      elif in_lang == "Bengali":
-          input_language = "bn"
-      elif in_lang == "koreano":
-          input_language = "ko"
-      elif in_lang == "Mandarin":
-          input_language = "zh-cn"
-      elif in_lang == "Japones":
-          input_language = "ja"
-      
-      out_lang = st.selectbox(
-          "Select your output language",
-          ("Ingles", "Español", "Bengali", "koreano", "Mandarin", "Japones"),
-      )
-      if out_lang == "Ingles":
-          output_language = "en"
-      elif out_lang == "Español":
-          output_language = "es"
-      elif out_lang == "Bengali":
-          output_language = "bn"
-      elif out_lang == "koreano":
-          output_language = "ko"
-      elif out_lang == "Chinese":
-          output_language = "zh-cn"
-      elif out_lang == "Japones":
-          output_language = "ja"
-      
-      english_accent = st.selectbox(
-          "Seleccione el acento",
-          (
-              "Default",
-              "India",
-              "United Kingdom",
-              "United States",
-              "Canada",
-              "Australia",
-              "Ireland",
-              "South Africa",
-          ),
-      )
-      
-      if english_accent == "Default":
-          tld = "com"
-      elif english_accent == "India":
-          tld = "co.in"
-      
-      elif english_accent == "United Kingdom":
-          tld = "co.uk"
-      elif english_accent == "United States":
-          tld = "com"
-      elif english_accent == "Canada":
-          tld = "ca"
-      elif english_accent == "Australia":
-          tld = "com.au"
-      elif english_accent == "Ireland":
-          tld = "ie"
-      elif english_accent == "South Africa":
-          tld = "co.za"
+if img_file_buffer is not None:
+    try:
+        # To read image file buffer with OpenCV:
+        bytes_data = img_file_buffer.getvalue()
+        cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
 
-      display_output_text = st.checkbox("Mostrar texto")
+        if filtro == 'Sí':
+            # Aplicar filtro de inversión de color
+            cv2_img = cv2.bitwise_not(cv2_img)
+        
+        img_rgb = cv2.cvtColor(cv2_img, cv2.COLOR_BGR2RGB)
+        text = pytesseract.image_to_string(img_rgb)
+        st.success("¡Foto capturada y procesada! (◠‿◠)")
+    except Exception as e:
+        st.error(f"Error al procesar la foto de la cámara: {e}")
+        text = "" # Resetear texto en caso de error
 
-      if st.button("convert"):
-          result, output_text = text_to_speech(input_language, output_language, text, tld)
-          audio_file = open(f"temp/{result}.mp3", "rb")
-          audio_bytes = audio_file.read()
-          st.markdown(f"## Tu audio:")
-          st.audio(audio_bytes, format="audio/mp3", start_time=0)
-      
-          if display_output_text:
-              st.markdown(f"## Texto de salida:")
-              st.write(f" {output_text}")
+# --- Sección 3: Mostrar Texto Extraído (Editable) ---
+# Esta sección ahora es independiente y siempre se muestra, 
+# reflejando el 'text' global que fue actualizado por la cámara o el archivo.
+st.subheader("Texto Extraído (Puedes editarlo) ✍️")
+text = st.text_area("Resultado del OCR:", text, height=200, label_visibility="collapsed")
 
 
+# --- Sección 4: Traducción y Text-to-Speech ---
+st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+st.markdown("<h2>Paso 2: Traducir y Escuchar 🎧</h2>", unsafe_allow_html=True)
 
+# Crear directorio temporal si no existe
+try:
+    os.makedirs("temp", exist_ok=True)
+except FileExistsError:
+    pass
+
+# Columnas para los selectores de idioma
+col1, col2 = st.columns(2)
+
+with col1:
+    in_lang = st.selectbox(
+        "Lenguaje de entrada (original):",
+        ("Español", "Ingles", "Bengali", "Koreano", "Mandarin", "Japones"),
+        index=1 # Default a Ingles
+    )
+    
+with col2:
+    out_lang = st.selectbox(
+        "Lenguaje de salida (traducción):",
+        ("Español", "Ingles", "Bengali", "Koreano", "Mandarin", "Japones"),
+        index=0 # Default a Español
+    )
+
+# Mapeo de nombres amigables a códigos de idioma
+lang_map = {
+    "Ingles": "en",
+    "Español": "es",
+    "Bengali": "bn",
+    "Koreano": "ko",
+    "Mandarin": "zh-cn",
+    "Japones": "ja"
+}
+input_language = lang_map.get(in_lang, "en")
+output_language = lang_map.get(out_lang, "es")
+
+# Selector de acento (solo relevante para inglés)
+english_accent = st.selectbox(
+    "Seleccione el acento (si la salida es Inglés):",
+    (
+        "Default (US)", "India", "United Kingdom", "Canada", "Australia",
+        "Ireland", "South Africa",
+    ),
+)
+
+accent_map = {
+    "Default (US)": "com",
+    "India": "co.in",
+    "United Kingdom": "co.uk",
+    "Canada": "ca",
+    "Australia": "com.au",
+    "Ireland": "ie",
+    "South Africa": "co.za"
+}
+tld = accent_map.get(english_accent, "com")
+
+display_output_text = st.checkbox("Mostrar texto traducido", value=True)
+
+if st.button("Convertir y Hablar! 🎶", use_container_width=True, type="primary"):
+    if text and text.strip():
+        with st.spinner("Traduciendo y generando audio... (｡♥‿♥｡)"):
+            result, output_text, audio_path = text_to_speech(input_language, output_language, text, tld)
+            
+            if audio_path and os.path.exists(audio_path):
+                audio_file = open(audio_path, "rb")
+                audio_bytes = audio_file.read()
+                
+                st.markdown("### ¡Tu audio está listo! 🎵")
+                st.audio(audio_bytes, format="audio/mp3", start_time=0)
+                
+                if display_output_text:
+                    st.markdown("### Texto Traducido:")
+                    st.write(f"> {output_text}")
+            else:
+                st.error("No se pudo generar el archivo de audio.")
+    else:
+        st.warning("No hay texto para convertir. Por favor, carga una imagen o toma una foto primero. (・_・;)")
+
+st.markdown('</div>', unsafe_allow_html=True)
 
  
     
