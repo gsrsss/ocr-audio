@@ -59,30 +59,12 @@ def remove_files(n):
 # Limpiar archivos antiguos al iniciar
 remove_files(7)
 
-# Estilo CSS para las cajas rosadas
-st.markdown("""
-<style>
-.pink-box {
-    background-color: #fce4ec; /* Rosa muy claro */
-    border: 2px solid #f06292; /* Borde rosa más oscuro */
-    border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-.pink-box h2 {
-    color: #c2185b; /* Rosa oscuro para el título */
-    border-bottom: 2px solid #f06292;
-    padding-bottom: 5px;
-}
-</style>
-""", unsafe_allow_html=True)
+# Se eliminó el Estilo CSS para las cajas rosadas
 
 st.title("Reconocimiento Óptico de Caracteres (✿^‿^)")
 st.subheader("Extrae texto de imágenes y escúchalo en otro idioma.")
 
 # --- Sección 1: Carga de Imagen ---
-# Se eliminó la caja rosada de esta sección
 st.markdown("<h2>Paso 1: Elige tu Imágen (b ᵔ▽ᵔ)b</h2>", unsafe_allow_html=True)
 
 cam_ = st.checkbox("Usar Cámara")
@@ -131,15 +113,12 @@ if img_file_buffer is not None:
         text = "" # Resetear texto en caso de error
 
 # --- Sección 3: Mostrar Texto Extraído (Editable) ---
-# Esta sección ahora está dentro de una caja rosada
-st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+# Se eliminó la caja rosada
 st.subheader("Texto Extraído (Puedes editarlo) ✍️")
 text = st.text_area("Resultado del OCR:", text, height=200, label_visibility="collapsed")
-st.markdown('</div>', unsafe_allow_html=True)
 
 
 # --- Sección 4: Traducción y Text-to-Speech ---
-# Se eliminó la caja rosada principal de esta sección
 st.markdown("<h2>Paso 2: Traducir y Escuchar 🎧</h2>", unsafe_allow_html=True)
 
 # Crear directorio temporal si no existe
@@ -212,13 +191,10 @@ if st.button("Convertir y Hablar! 🎶", use_container_width=True, type="primary
                 st.audio(audio_bytes, format="audio/mp3", start_time=0)
                 
                 if display_output_text:
-                    # La caja rosada ahora rodea solo el texto traducido
-                    st.markdown('<div class="pink-box">', unsafe_allow_html=True)
+                    # Se eliminó la caja rosada
                     st.markdown("### Texto Traducido:")
                     st.write(f"> {output_text}")
-                    st.markdown('</div>', unsafe_allow_html=True)
             else:
                 st.error("No se pudo generar el archivo de audio.")
     else:
         st.warning("No hay texto para convertir. Por favor, carga una imagen o toma una foto primero. (・_・;)")
-
